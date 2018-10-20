@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Globalization;
 using System.Linq;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.Runtime.InteropServices;
 
 
 // Inspired heavily by ImageJ
@@ -155,39 +158,33 @@ namespace DicomImageViewer
             typeofDicomFile = TypeOfDicomFile.NotDicom;
         }
 
-        public string DicomFileName
+        public void Init(Stream fileStream)
         {
-            set
+            InitializeDicom();
+            file = new BinaryReader(fileStream);
+            location = 0; // Reset the location
+            dicomInfo.Clear();
+            try
             {
-                dicomFileName = value;
-                InitializeDicom();
-
-                // Thanks to CodeProject member Alphons van der Heijden for 
-                //   suggesting to add this - FileAccess.Read  (July 2010)
-                file = new BinaryReader(File.Open(dicomFileName, FileMode.Open, FileAccess.Read));
-                location = 0; // Reset the location
-                dicomInfo.Clear();
-                try
+                bool readResult = ReadFileInfo();
+                if (readResult && widthTagFound && heightTagFound && pixelDataTagFound)
                 {
-                    bool readResult = ReadFileInfo();
-                    if (readResult && widthTagFound && heightTagFound && pixelDataTagFound)
-                    {
-                        ReadPixels();
-                        if (dicmFound == true)
-                            typeofDicomFile = TypeOfDicomFile.Dicom3File;
-                        else
-                            typeofDicomFile = TypeOfDicomFile.DicomOldTypeFile;
-                    }
-                }
-                catch
-                {
-                    // Nothing here
-                }
-                finally
-                {
-                    file.Close();
+                    ReadPixels();
+                    if (dicmFound == true)
+                        typeofDicomFile = TypeOfDicomFile.Dicom3File;
+                    else
+                        typeofDicomFile = TypeOfDicomFile.DicomOldTypeFile;
                 }
             }
+            catch
+            {
+                // Nothing here
+            }
+            finally
+            {
+                file.Close();
+            }
+
         }
 
         public void GetPixels8(ref List<byte> pixels)
@@ -834,6 +831,57 @@ namespace DicomImageViewer
                     pixels24.Add(buf[i]);
                 }
             }
+        }
+        public Bitmap CreateImage16(DicomDecoder decoder, List<ushort> pix16)
+        {
+            var lut16 = new byte[65536];
+            var winMax = 33224;
+            var winMin = 32888;
+            int range = winMax - winMin;
+            if (range < 1) range = 1;
+            double factor = 255.0 / range;
+            int i;
+
+            for (i = 0; i < 65536; ++i)
+            {
+                if (i <= winMin)
+                    lut16[i] = 0;
+                else if (i >= winMax)
+                    lut16[i] = 255;
+                else
+                {
+                    lut16[i] = (byte)((i - winMin) * factor);
+                }
+            }
+
+            var bmp = new Bitmap(decoder.width,
+                decoder.height, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
+
+            BitmapData bmd = bmp.LockBits(new Rectangle(0, 0, decoder.width, decoder.height),
+               System.Drawing.Imaging.ImageLockMode.ReadOnly, bmp.PixelFormat);
+            unsafe
+            {
+                int pixelSize = 3;
+                int j, j1, i1;
+                byte b;
+
+                for (i = 0; i < bmd.Height; ++i)
+                {
+                    byte* row = (byte*)bmd.Scan0 + (i * bmd.Stride);
+                    i1 = i * bmd.Width;
+
+                    for (j = 0; j < bmd.Width; ++j)
+                    {
+                        b = lut16[pix16[i * bmd.Width + j]];
+                        j1 = j * pixelSize;
+                        row[j1] = b;            // Red
+                        row[j1 + 1] = b;        // Green
+                        row[j1 + 2] = b;        // Blue
+                    }
+                }
+            }
+            bmp.UnlockBits(bmd);
+            return bmp;
         }
     }
 }
