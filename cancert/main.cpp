@@ -2,37 +2,22 @@
 
 using namespace cv;
 
-Mat origin;
-
-struct ThresholdState
-{
-	int adaptiveThreshold = 100;
-	int blockSize = 43;
-	int C = 150;
-} thresholdState;
+static const double CRANIUM_AREA_COEFFICIENT = 0.0004;
+static const int ADAPTIVE_THRESHOLD_OFFSET = -10;
+static const int ADAPTIVE_THRESHOLD_BLOCKSIZE = 43;
+static const int ADAPTIVE_THRESHOLD_C = 50;
+static const int MORPH_SIZE = 40;
 
 double getMean(Mat channel)
 {
-	int histSize = 256;    // bin size
+	auto histSize = 256;    // bin size
 	float range[] = { 0, 255 };
 	const float *ranges[] = { range };
 
 	MatND hist;
-	calcHist(&channel, 1, 0, Mat(), hist, 1, &histSize, ranges, true, false);
+	calcHist(&channel, 1, nullptr, Mat(), hist, 1, &histSize, ranges, true, false);
 
-	int hist_w = 255; int hist_h = 255;
-	int bin_w = cvRound((double)hist_w / histSize);
-
-	Mat histImage(hist_h, hist_w, CV_8UC1, Scalar(0, 0, 0));
-	normalize(hist, hist, 0, histImage.rows, NORM_MINMAX);
-
-	for (int i = 1; i < histSize; i++) {
-		line(histImage, Point(bin_w*(i - 1), hist_h - cvRound(hist.at<float>(i - 1))),
-			Point(bin_w*(i), hist_h - cvRound(hist.at<float>(i))),
-			Scalar(255, 0, 0), 2, 8, 0);
-	}
-
-	imshow("Hist", histImage);
+	normalize(hist, hist, 0, 255, NORM_MINMAX);
 
 	auto model = ml::EM::create();
 	model->setClustersNumber(3);
@@ -46,42 +31,76 @@ double getMean(Mat channel)
 	return means.at<double>(1);
 }
 
-void processImage()
+void processImage(Mat origin)
 {
-	Mat originalMat = origin.clone();
+	auto originalMat = origin.clone();
 
 	threshold(originalMat, originalMat, 30, 255, CV_THRESH_TOZERO);
 	normalize(originalMat, originalMat, 0, 255, NORM_MINMAX);
-
+	
 	fastNlMeansDenoising(originalMat, originalMat, 3, 7, 21);
-	imshow("Original", originalMat);
 
-	Mat thresholdedMat = originalMat.clone();
-	threshold(originalMat, thresholdedMat, 30, 255, CV_THRESH_BINARY);
+	auto thresholdMat = originalMat.clone();
+	threshold(originalMat, thresholdMat, 30, 255, CV_THRESH_BINARY);
 
 	std::vector<std::vector<Point>> contours;
-	Mat contourOutput = thresholdedMat.clone();
+	auto contourOutput = thresholdMat.clone();
 	findContours(contourOutput, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
-	Rect minimalRect = boundingRect(contours[0]);
+	auto minimalRect = boundingRect(contours[0]);
 
+	const auto craniumThickness = static_cast<int>(CRANIUM_AREA_COEFFICIENT * minimalRect.size().area());
 	Mat craniumMask = Mat::zeros(originalMat.size(), CV_8UC1);
 	for (size_t idx = 0; idx < contours.size(); idx++) {
-		drawContours(craniumMask, contours, idx, Scalar(255), 0.0004f * minimalRect.size().area());
+		drawContours(craniumMask, contours, idx, Scalar(255), craniumThickness);
 	}
+
+	const Rect leftRect(minimalRect.x, minimalRect.y, minimalRect.width / 2, minimalRect.height);
+	const Rect rightRect(minimalRect.x + minimalRect.width / 2, minimalRect.y, minimalRect.width / 2, minimalRect.height);
+
+	Mat leftSubImage;
+	const Mat leftImage = Mat::zeros(origin.size(), CV_8U);
+	Mat(originalMat, leftRect).copyTo(leftSubImage);
+	flip(leftSubImage, leftImage(rightRect), 1);
+
+	Mat rightSubImage;
+	const Mat rightImage = Mat::zeros(origin.size(), CV_8U);
+	Mat(originalMat, rightRect).copyTo(rightSubImage);
+	flip(rightSubImage, rightImage(leftRect), 1);
+
+	auto mirroredMat = originalMat.clone();
+	subtract(mirroredMat, leftImage, mirroredMat);
+	subtract(mirroredMat, rightImage, mirroredMat);
+
+	Mat reflected;
+	subtract(originalMat, mirroredMat, reflected);
+
+	auto subtractionMat = originalMat.clone();
+	subtractionMat.setTo(0, originalMat > reflected);
+	subtract(originalMat, subtractionMat, originalMat);
 
 	subtract(originalMat, craniumMask, originalMat);
 
-	Mat adaptiveThresholdedMat;
-	adaptiveThreshold(originalMat, adaptiveThresholdedMat, 
-		thresholdState.adaptiveThreshold, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY,
-		thresholdState.blockSize, thresholdState.C - 100);
-	subtract(originalMat, adaptiveThresholdedMat, originalMat);
+	Mat adaptiveThresholdMat;
+	adaptiveThreshold(originalMat, adaptiveThresholdMat,
+		getMean(originalMat) * 255 + ADAPTIVE_THRESHOLD_OFFSET, 
+		ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY, ADAPTIVE_THRESHOLD_BLOCKSIZE, 
+		ADAPTIVE_THRESHOLD_C);
 
-	Mat structuringElement = getStructuringElement(MORPH_ELLIPSE, Size(40, 40));
+	subtract(originalMat, adaptiveThresholdMat, originalMat);
+
+	const auto structuringElement = getStructuringElement(MORPH_ELLIPSE, Size(MORPH_SIZE, MORPH_SIZE));
 	morphologyEx(originalMat, originalMat, MORPH_CLOSE, structuringElement);
 
-	Mat resultMat = origin.clone();
+	const auto minimalRectCenter = minimalRect.x + minimalRect.width / 2;
+
+	Mat(originalMat, Rect(minimalRectCenter - craniumThickness / 2, 
+		minimalRect.y, craniumThickness, craniumThickness * 2)) = Scalar(0);
+
+	Mat(originalMat, Rect(minimalRectCenter - craniumThickness / 2, 
+		minimalRect.y + minimalRect.height - craniumThickness * 2, craniumThickness, craniumThickness * 2)) = Scalar(0);
+
+	auto resultMat = origin.clone();
 	cvtColor(resultMat, resultMat, CV_GRAY2RGB);
 	Scalar colors[3];
 	contours.clear();
@@ -97,29 +116,9 @@ void processImage()
 
 int main(int argc, char* argv[])
 {
-	origin = imread(argv[1], IMREAD_GRAYSCALE); //input image
+	const auto origin = imread(argv[1], IMREAD_GRAYSCALE); //input image
 
-	thresholdState.adaptiveThreshold = getMean(origin);
-
-	namedWindow("Final", 1);
-
-	createTrackbar("Threshold", "Final", &thresholdState.adaptiveThreshold, 255, [](int, void*) {
-		processImage();
-	});
-
-	createTrackbar("Block size", "Final", &thresholdState.blockSize, 255, [](int, void*) {
-		thresholdState.blockSize += (thresholdState.blockSize + 1) % 2;
-		if (thresholdState.blockSize < 3) {
-			thresholdState.blockSize = 3;
-		}
-		processImage();
-	});
-
-	createTrackbar("Threshold constant", "Final", &thresholdState.C, 200, [](int, void*) {
-		processImage();
-	});
-
-	processImage();
+	processImage(origin);
 
 	waitKey();
 }

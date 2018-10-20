@@ -7,11 +7,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cancert", "cancert\cancert.
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Release|x64 = Release|x64
+		Release|Win32 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{50033BA1-6C90-477E-8D71-91049FDAB87D}.Release|x64.ActiveCfg = Release|x64
-		{50033BA1-6C90-477E-8D71-91049FDAB87D}.Release|x64.Build.0 = Release|x64
+		{50033BA1-6C90-477E-8D71-91049FDAB87D}.Release|Win32.ActiveCfg = Release|Win32
+		{50033BA1-6C90-477E-8D71-91049FDAB87D}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
