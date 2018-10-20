@@ -6,11 +6,12 @@ using System.Linq;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 
 
 // Inspired heavily by ImageJ
 
-namespace DicomImageViewer
+namespace DicomParser
 {
     public enum TypeOfDicomFile
     {
@@ -157,6 +158,18 @@ namespace DicomImageViewer
             rescaleSlope = 1.0; // Default value
             typeofDicomFile = TypeOfDicomFile.NotDicom;
         }
+
+        public IEnumerable<Meta> GetMeta()
+        => dicomInfo
+                .Select(t => Regex.Match(t, @"(?<group>\S{4})(?<element>\S{4})//(?<description>[^:]+): (?<value>[^:]+)"))
+                .Select(m => new Meta
+                {
+                    GroupTag = m.Groups["group"].Value,
+                    ElementTag = m.Groups["element"].Value,
+                    Description = m.Groups["description"].Value,
+                    Value = m.Groups["value"].Value
+                });
+
 
         public void Init(Stream fileStream)
         {
@@ -832,11 +845,9 @@ namespace DicomImageViewer
                 }
             }
         }
-        public Bitmap CreateImage16(DicomDecoder decoder, List<ushort> pix16)
+        public Bitmap CreateImage16(int winMax = 34148, int winMin = 32786)
         {
             var lut16 = new byte[65536];
-            var winMax = 33224;
-            var winMin = 32888;
             int range = winMax - winMin;
             if (range < 1) range = 1;
             double factor = 255.0 / range;
@@ -854,11 +865,9 @@ namespace DicomImageViewer
                 }
             }
 
-            var bmp = new Bitmap(decoder.width,
-                decoder.height, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
+            var bmp = new Bitmap(width, height, PixelFormat.Format24bppRgb);
 
-            BitmapData bmd = bmp.LockBits(new Rectangle(0, 0, decoder.width, decoder.height),
-               System.Drawing.Imaging.ImageLockMode.ReadOnly, bmp.PixelFormat);
+            BitmapData bmd = bmp.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadOnly, bmp.PixelFormat);
             unsafe
             {
                 int pixelSize = 3;
@@ -872,7 +881,7 @@ namespace DicomImageViewer
 
                     for (j = 0; j < bmd.Width; ++j)
                     {
-                        b = lut16[pix16[i * bmd.Width + j]];
+                        b = lut16[pixels16[i * bmd.Width + j]];
                         j1 = j * pixelSize;
                         row[j1] = b;            // Red
                         row[j1 + 1] = b;        // Green

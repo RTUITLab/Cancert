@@ -10,7 +10,7 @@
 
 // Update from July 2012: Checked with DICOM Standard Part 6, Version 2011
 
-namespace DicomImageViewer
+namespace DicomParser
 {
     public class DicomDictionary
     {

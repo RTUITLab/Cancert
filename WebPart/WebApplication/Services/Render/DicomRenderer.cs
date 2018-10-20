@@ -1,4 +1,4 @@
-﻿using DicomImageViewer;
+﻿using DicomParser;
 using System;
 using System.Collections.Generic;
 using System.IO;
