@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace WebApplication.Services.Render
 {
-    interface IRenderer
+    public interface IRenderer
     {
-        Stream Render(Stream dicomStream);
+        Task<Stream> Render(Stream dicomStream);
     }
 }

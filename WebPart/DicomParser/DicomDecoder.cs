@@ -845,8 +845,27 @@ namespace DicomParser
                 }
             }
         }
-        public Bitmap CreateImage16(int winMax = 34148, int winMin = 32786)
+        public Bitmap CreateImage16()
         {
+            var minPixelValue = pixels16.Min();
+            var maxPixelValue = pixels16.Max();
+
+            if (signedImage)
+            {
+                windowCentre -= short.MinValue;
+            }
+            if (Math.Abs(windowWidth) < 0.001)
+            {
+                windowWidth = maxPixelValue - minPixelValue;
+            }
+            if ((windowCentre == 0) ||
+                        (minPixelValue > windowCentre) || (maxPixelValue < windowCentre))
+            {
+                windowCentre = (maxPixelValue + minPixelValue) / 2;
+            }
+
+            var winMax = Convert.ToInt32(windowCentre + 0.5 * windowWidth);
+            var winMin = winMax - Convert.ToInt32(windowWidth);
             var lut16 = new byte[65536];
             int range = winMax - winMin;
             if (range < 1) range = 1;
