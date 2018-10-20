@@ -12,7 +12,7 @@
 
 namespace DicomImageViewer
 {
-    class DicomDictionary
+    public class DicomDictionary
     {
         public Dictionary<string, string> dict = new Dictionary<string, string>()
         {

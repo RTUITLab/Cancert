@@ -17,7 +17,7 @@ namespace DicomImageViewer
         DicomUnknownTransferSyntax
     };
 
-    class DicomDecoder
+    public class DicomDecoder
     {
         const uint PIXEL_REPRESENTATION = 0x00280103;
         const uint TRANSFER_SYNTAX_UID = 0x00020010;
