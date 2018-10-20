@@ -845,6 +845,7 @@ namespace DicomParser
                 }
             }
         }
+<<<<<<< HEAD
         public Bitmap CreateImage16()
         {
             var minPixelValue = pixels16.Min();
@@ -866,6 +867,10 @@ namespace DicomParser
 
             var winMax = Convert.ToInt32(windowCentre + 0.5 * windowWidth);
             var winMin = winMax - Convert.ToInt32(windowWidth);
+=======
+        public Bitmap CreateImage16(int winMax = 34148, int winMin = 32786)
+        {
+>>>>>>> develop
             var lut16 = new byte[65536];
             int range = winMax - winMin;
             if (range < 1) range = 1;

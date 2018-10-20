@@ -9,8 +9,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+<<<<<<< HEAD
 using Swashbuckle.AspNetCore.Swagger;
 using WebApplication.Services.Render;
+=======
+>>>>>>> develop
 
 namespace WebApplication
 {
@@ -26,11 +29,14 @@ namespace WebApplication
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+<<<<<<< HEAD
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new Info { Title = "My API", Version = "v1" });
             });
             services.AddTransient<IRenderer, DicomRenderer>();
+=======
+>>>>>>> develop
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
         }
 
@@ -41,6 +47,7 @@ namespace WebApplication
             {
                 app.UseDeveloperExceptionPage();
             }
+<<<<<<< HEAD
             app.UseSwagger();
 
             // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.), 
@@ -49,6 +56,9 @@ namespace WebApplication
             {
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
             });
+=======
+
+>>>>>>> develop
             app.UseMvc();
         }
     }

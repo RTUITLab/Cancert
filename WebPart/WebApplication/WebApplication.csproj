@@ -2,7 +2,10 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.1</TargetFramework>
+<<<<<<< HEAD
     <LangVersion>7.1</LangVersion>
+=======
+>>>>>>> develop
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,7 +15,10 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.AspNetCore.Razor.Design" Version="2.1.2" PrivateAssets="All" />
+<<<<<<< HEAD
     <PackageReference Include="Swashbuckle.AspNetCore" Version="3.0.0" />
+=======
+>>>>>>> develop
   </ItemGroup>
 
   <ItemGroup>
