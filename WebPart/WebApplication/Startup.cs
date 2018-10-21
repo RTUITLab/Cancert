@@ -1,15 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
+using AutoMapper;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Authorization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using Swashbuckle.AspNetCore.Swagger;
+using WebApplication.DataBase;
+using WebApplication.Services.Analyzers;
+using WebApplication.Services.FileSystem;
 using WebApplication.Services.Render;
 
 namespace WebApplication
@@ -26,12 +36,43 @@ namespace WebApplication
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddSwaggerGen(c =>
-            {
-                c.SwaggerDoc("v1", new Info { Title = "My API", Version = "v1" });
-            });
+            services.Configure<LocalFileSystemSettings>(Configuration.GetSection(nameof(LocalFileSystemSettings)));
+            services.Configure<AzureServiceBusNotificatorSettings>(Configuration.GetSection(nameof(AzureServiceBusNotificatorSettings)));
+            services
+                    .AddDbContext<DataBaseContext>(options =>
+                    options.UseSqlServer(Configuration.GetConnectionString("LocalDBDataBase")));
+
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                    .AddJwtBearer(options =>
+                    {
+                        options.RequireHttpsMetadata = false;
+                        options.TokenValidationParameters = new TokenValidationParameters
+                        {
+                            ValidateIssuer = false,
+                            ValidateAudience = false,
+
+                            ValidateLifetime = true,
+                            ValidateIssuerSigningKey = true,
+                            IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(Configuration.GetValue<string>("JWTKey")))
+                        };
+                    });
+
+            services.AddAutoMapper();
+
             services.AddTransient<IRenderer, DicomRenderer>();
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+            services.AddTransient<IFileStorage, LocalFileSystemFileStorage>();
+            services.AddTransient<IAnalyzer, AzureServiceBusNotificatorAnalyzer>();
+            services.AddMvc(setup =>
+            {
+                var policy = new AuthorizationPolicyBuilder()
+                     .RequireAuthenticatedUser()
+                     .AddAuthenticationSchemes("Bearer")
+                     .Build();
+                setup.Filters.Add(new AuthorizeFilter(policy));
+            }
+            )
+                .SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
+                .AddJsonOptions(options => options.SerializerSettings.NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -41,14 +82,11 @@ namespace WebApplication
             {
                 app.UseDeveloperExceptionPage();
             }
-            app.UseSwagger();
-
-            // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.), 
-            // specifying the Swagger JSON endpoint.
-            app.UseSwaggerUI(c =>
-            {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
-            });
+            app.UseCors(config => 
+                config.AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowAnyOrigin()
+                .AllowCredentials());
             app.UseMvc();
         }
     }

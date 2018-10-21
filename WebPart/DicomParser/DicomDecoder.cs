@@ -161,6 +161,7 @@ namespace DicomParser
 
         public IEnumerable<Meta> GetMeta()
         => dicomInfo
+                .Distinct()
                 .Select(t => Regex.Match(t, @"(?<group>\S{4})(?<element>\S{4})//(?<description>[^:]+): (?<value>[^:]+)"))
                 .Select(m => new Meta
                 {

@@ -15,7 +15,7 @@ namespace ConsoleTester
         {
             var decoder = new DicomDecoder();
             
-            decoder.Init(File.OpenRead(@"C:\Users\Reality_Shift\Desktop\New folder\MR.386348.Image 9.dcm"));
+            decoder.Init(File.OpenRead(@"C:\Users\Reality_Shift\Desktop\0.dcm"));
             decoder.dicomInfo.
                 Zip(decoder.GetMeta(), (f, second) => $">>{f}<< >>{second}<<")
                 .ToList()
