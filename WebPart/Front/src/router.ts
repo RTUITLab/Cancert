@@ -9,10 +9,16 @@ export default new Router({
   base: process.env.BASE_URL,
   routes: [
     {
-      path: '/about',
-      name: 'about',
+      path: '/dashboard',
+      name: 'dashboard',
       component: () =>
-        import(/* webpackChunkName: "about" */ './views/About.vue')
+        import(/* webpackChunkName: "about" */ './views/Dashboard.vue')
+    },
+    {
+      path: '/documentation',
+      name: 'documentation',
+      component: () =>
+        import(/* webpackChunkName: "about" */ './views/Documentation.vue')
     },
     {
       path: '/authorize',
