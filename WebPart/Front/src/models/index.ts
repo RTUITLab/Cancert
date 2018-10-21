@@ -54,7 +54,7 @@ export class State {
   public authorize(key: string) {
     return new Promise((resolve, reject) => {
       axios
-        .post('HospitalAccount', `"LongAccessTokenForCancerHospital"`)
+        .post('HospitalAccount', `"${key}"`)
         .then((response) => {
           const body = response.data;
           axios.defaults.headers.common.Authorization = `Bearer ${body.jwt}`;

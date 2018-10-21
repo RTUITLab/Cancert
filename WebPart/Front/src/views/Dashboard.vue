@@ -10,10 +10,14 @@
             <el-card class="box-card" v-for="record in records" :key="record.id">
               <div class="text item">
                 <el-row :gutter="24">
-                  <el-col :span="12">
+                  <el-col :span="8">
                     <b>{{ record.pagesCount }} page{{ record.pagesCount === 1 ? '' : 's' }}</b>
                   </el-col>
-                  <el-col :span="12" align="right">
+                  <el-col :span="16" align="right">
+                    <el-select v-model="algorithm" placeholder="Algorithm" size="mini" style="display: inline; float: left">
+                      <el-option v-for="item in algorithms" :key="item.name" :label="`${item.name} ${item.version}`" :value="item">
+                      </el-option>
+                    </el-select>
                     <el-button size="mini" type="primary" @click="queueAnalize(record)">Queue analize</el-button>
                   </el-col>
                 </el-row>
@@ -73,17 +77,24 @@ export default class Dashboard extends Vue {
   public records: Record[] = [];
 
   public attachments: File[] = [];
+  public algorithm?: Algorithm;
+
+  public fetchAll() {
+    Promise.all([
+      currentState.fetchAlgorithms(),
+      currentState.fetchRecords(),
+      currentState.fetchAnalyze()
+    ]).then(() => {
+      this.algorithms = currentState.algorithms;
+      this.algorithm = this.algorithms[0];
+      this.records = currentState.records;
+    });
+  }
 
   public mounted() {
+    this.fetchAll();
     setInterval(() => {
-      Promise.all([
-        currentState.fetchAlgorithms(),
-        currentState.fetchRecords(),
-        currentState.fetchAnalyze()
-      ]).then(() => {
-        this.algorithms = currentState.algorithms;
-        this.records = currentState.records;
-      });
+      this.fetchAll();
     }, 5000);
   }
 
