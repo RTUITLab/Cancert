@@ -1,17 +1,17 @@
 {
-  "TargetDir": "./",
+  "TargetDir": "C:\\Users\\Reality_Shift\\source\\repos\\Cancert\\CancerDetectors\\sample\\build",
   "Photos": [
     {
-      "Path": "./MR.386662.Image 17.jpg"
+      "Path": ".\\MR.386662.Image 17.jpg"
     },
     {
-      "Path": "./MR.386800.Image 115.jpg"
+      "Path": ".\\MR.386800.Image 115.jpg"
     },
     {
-      "Path": "./MR.386801.Image 147.jpg"
+      "Path": ".\\MR.386801.Image 147.jpg"
     },
     {
-      "Path": "./MR.386801.Image 155.jpg"
+      "Path": ".\\MR.386801.Image 155.jpg"
     }
   ]
 }

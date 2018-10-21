@@ -21,6 +21,10 @@ namespace WebApplication
             WebHost.CreateDefaultBuilder(args)
                 .ConfigureAppConfiguration(config => config.AddJsonFile("appsettings.Secret.json"))
                 .UseUrls("http://0.0.0.0:" + args[0])
-                .UseStartup<Startup>();
+                .UseStartup<Startup>()
+                .UseKestrel(options =>
+                {
+                    options.Limits.MaxRequestBodySize = null;
+                });
     }
 }

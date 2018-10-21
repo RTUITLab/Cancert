@@ -10,5 +10,9 @@ namespace WebApplication.Services.FileSystem
     {
         Task SaveMRData(Guid id, IEnumerable<Stream> dcioFiles);
         Task<IEnumerable<Stream>> GetMRData(Guid id);
+
+        Task SaveAnalyzeResult(Guid id, IEnumerable<Stream> dcioFiles);
+        Task<IEnumerable<Stream>> GetAnalyzeResult(Guid id);
+        Task<Stream> GetAnalyzeResult(Guid id, int num);
     }
 }

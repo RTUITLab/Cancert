@@ -15,6 +15,18 @@ namespace WebApplication.Services.FileSystem
         {
             settings = options.Value;
         }
+
+        public Task<IEnumerable<Stream>> GetAnalyzeResult(Guid id)
+            => GetMRData(id);
+
+        public Task<Stream> GetAnalyzeResult(Guid id, int num)
+        {
+            var targetFile = Path.Combine(settings.WorkDirectory, id.ToString(), $"{num}.png");
+            if (!File.Exists(targetFile))
+                return Task.FromResult<Stream>(null);
+            return Task.FromResult<Stream>(File.OpenRead(targetFile));
+        }
+
         public Task<IEnumerable<Stream>> GetMRData(Guid id)
         {
             var targetDir = Path.Combine(settings.WorkDirectory, id.ToString());
@@ -28,8 +40,15 @@ namespace WebApplication.Services.FileSystem
                 .Select(File.OpenRead));
         }
 
-        public async Task SaveMRData(Guid id, IEnumerable<Stream> dcioFiles)
+        public Task SaveAnalyzeResult(Guid id, IEnumerable<Stream> dcioFiles)
+            => SavePack(id, dcioFiles, i => $"{i}.png");
+
+        public Task SaveMRData(Guid id, IEnumerable<Stream> dcioFiles)
+            => SavePack(id, dcioFiles, i => $"{i}.dcm");
+
+        private async Task SavePack(Guid id, IEnumerable<Stream> dcioFiles, Func<int, string> fileName)
         {
+
             var targetDir = Path.Combine(settings.WorkDirectory, id.ToString());
             if (Directory.Exists(targetDir))
             {
@@ -38,7 +57,7 @@ namespace WebApplication.Services.FileSystem
             Directory.CreateDirectory(targetDir);
             var tasks = dcioFiles.Select((s, i) => Task.Run(async () =>
             {
-                using (var fileStream = File.OpenWrite(Path.Combine(targetDir, $"{i}.dcm")))
+                using (var fileStream = File.OpenWrite(Path.Combine(targetDir, fileName(i))))
                     await s.CopyToAsync(fileStream);
             })).ToArray();
             await Task.WhenAll(tasks);

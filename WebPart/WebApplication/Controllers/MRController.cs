@@ -4,11 +4,15 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
+using AutoMapper.QueryableExtensions;
+using DicomParser;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PublicAPI.Requests;
+using PublicAPI.Responses;
 using WebApplication.Controllers.Stuff;
 using WebApplication.DataBase;
 using WebApplication.Models.Data;
@@ -22,15 +26,18 @@ namespace WebApplication.Controllers
     [ApiController]
     public class MRController : HospitalController
     {
+        private readonly IMapper mapper;
         private readonly IRenderer renderer;
         private readonly IFileStorage fileStorage;
         private readonly DataBaseContext dbContext;
 
         public MRController(
+            IMapper mapper,
             IRenderer renderer,
             IFileStorage fileStorage,
             DataBaseContext dbContext)
         {
+            this.mapper = mapper;
             this.renderer = renderer;
             this.fileStorage = fileStorage;
             this.dbContext = dbContext;
@@ -84,11 +91,35 @@ namespace WebApplication.Controllers
 
         [HttpGet("records")]
         public async Task<IActionResult> Records()
-            => Json(await dbContext.MrRecords.ToListAsync());
+        {
+            var records = (await dbContext
+                  .MrRecords
+                  .ToListAsync())
+                  .Select(r => (r, fileStorage.GetMRData(r.Id).Result))
+                  .Select(r => new RecordView
+                  {
+                      Id = r.r.Id,
+                      HospitalId = r.r.HospitalId,
+                      PagesCount = r.Result.Count(),
+                      Size = r.Result.Sum(s => s.Length),
+                      Meta = Meta(r.Result.First()).ToList()
+                  });
 
+            return Json(records);
+        }
+        private static IEnumerable<Meta> Meta(Stream str)
+        {
+            var d = new DicomDecoder();
+            d.Init(str);
+            return d.GetMeta();
+        }
         [HttpGet("records/{hospitalId:guid}")]
         public async Task<IActionResult> Records(Guid hospitalId)
-            => Json(await dbContext.MrRecords.Where(r => r.HospitalId == hospitalId).ToListAsync());
+            => Json(await dbContext
+                .MrRecords
+                .Where(r => r.HospitalId == hospitalId)
+                .ProjectTo<RecordView>()
+                .ToListAsync());
 
         [HttpGet("record/{recordId:guid}")]
         public async Task<IActionResult> Record(Guid recordId)
@@ -96,7 +127,7 @@ namespace WebApplication.Controllers
             var record = await dbContext.MrRecords.Where(r => r.Id == recordId).SingleOrDefaultAsync();
             if (record == null)
                 return NotFound();
-            return Json(record);
+            return Json(mapper.Map<RecordView>(record));
         }
 
         [AllowAnonymous]
@@ -135,7 +166,6 @@ namespace WebApplication.Controllers
         }
 
 
-
         [HttpGet("algorithms")]
         public async Task<IActionResult> QueueAnalyzes()
             => Json(await dbContext.MrAlgorithms.ToListAsync());
@@ -143,6 +173,40 @@ namespace WebApplication.Controllers
         [HttpGet("analyze")]
         public async Task<IActionResult> Analyzes()
             => Json(await dbContext.MrAnalyzes.ToListAsync());
+
+        [AllowAnonymous]
+        [HttpPost("analyze/accept/{analyzeId:guid}")]
+        public async Task<IActionResult> AcceptAnalyze(
+            Guid analyzeId,
+            List<IFormFile> pics)
+        {
+            if (pics?.Count < 1)
+                return BadRequest();
+
+            var analyze = await dbContext.MrAnalyzes.SingleOrDefaultAsync(a => a.Id == analyzeId);
+            if (analyze == null)
+            {
+                Console.WriteLine("NO ANALYZE");
+                return NotFound();
+            }
+
+            await fileStorage.SaveAnalyzeResult(analyze.Id, pics.Select(p => p.OpenReadStream()));
+            analyze.Status = MrAnalyzeStatus.Ready;
+            await dbContext.SaveChangesAsync();
+            return Ok();
+        }
+        [AllowAnonymous]
+
+        [HttpGet("analyze/result/{analyzeId:guid}/{pageNum:int}")]
+        public async Task<IActionResult> GetResultPage(
+            Guid analyzeId, int pageNum)
+        {
+            var stream = await fileStorage.GetAnalyzeResult(analyzeId, pageNum);
+            if (stream == null)
+                return NotFound();
+            return File(stream, "omage/png", $"{pageNum}.png");
+        }
+
 
         [HttpPost("analyze/queue/{mrRecordId:guid}")]
         public async Task<IActionResult> QueueAnalyzes(
@@ -168,5 +232,21 @@ namespace WebApplication.Controllers
             await Task.WhenAll(analyzes.Select(a => analyzer.Analyze(a)));
             return Ok();
         }
+
+        [AllowAnonymous]
+        [HttpGet("analyze/startWork/{analyzeId:guid}")]
+        public async Task<IActionResult> UpdateStatus(Guid analyzeId)
+        {
+            var analyze = await dbContext.MrAnalyzes.SingleOrDefaultAsync(a => a.Id == analyzeId);
+            if (analyze == null)
+            {
+                Console.WriteLine("NO ANALYZE");
+                return NotFound();
+            }
+            analyze.Status = (MrAnalyzeStatus)50;
+            await dbContext.SaveChangesAsync();
+            return Ok();
+        }
+
     }
 }
