@@ -14,7 +14,7 @@
 
           <el-row>
             <el-col style="display: flex">
-              <h1>World Free From Cancer</h1>
+              <h1>Project WF<sup>2</sup>C</h1>
             </el-col>
             <el-col align="center">
               <el-button type="primary" round @click="$router.push('/authorize')">Sign in</el-button>
@@ -26,20 +26,20 @@
       <div slot="main" class="main">
         <LandingElement>
           <template slot="first">
-            <img src="https://picsum.photos/600/300" alt="Test">
+            <img src="https://cdn.aarp.net/content/dam/aarp/health/conditions_treatments/2018/01/1140-hospitals-overflow-with-flu-Patients.imgcache.revb8eb3d0cfb11329fed3a53f981abb3ff.jpg" alt="Test">
           </template>
           <template slot="second">
-            <h1>First sample text</h1>
-            Lorem, ipsum dolor sit amet consectetur adipisicing elit. Aliquam exercitationem, quasi ipsum consectetur perspiciatis dignissimos ut obcaecati eligendi quidem aliquid necessitatibus omnis quisquam natus, nesciunt saepe incidunt quos ex officia?
+            <h1>New Way To Interact</h1><br>
+            Introducing a new way of analyzing and sharing data. Our platform allows to manipulate and manage large amounts of data while being connected to hundreds of hospitals across Hungary and many more all around the world. 
           </template>
         </LandingElement>
         <LandingElement :reversed="true">
           <template slot="first">
-            <img src="https://picsum.photos/600/300" alt="Test">
+            <img src="https://cdn10.phillymag.com/wp-content/uploads/sites/3/2017/08/hospital-istock0940x540.jpg" alt="Test">
           </template>
           <template slot="second">
-            <h1>First sample text</h1>
-            Lorem, ipsum dolor sit amet consectetur adipisicing elit. Aliquam exercitationem, quasi ipsum consectetur perspiciatis dignissimos ut obcaecati eligendi quidem aliquid necessitatibus omnis quisquam natus, nesciunt saepe incidunt quos ex officia?
+            <h1>Stable and Secure</h1><br>
+              We guarantee security and privacy to all our custumors, while hospitals can expect a high level of service. We pay a lot of attection to performance and optimization of our services making this platform one of the most stable and effective available today.
           </template>
         </LandingElement>
       </div>
@@ -77,6 +77,10 @@ export default class About extends Vue {}
       z-index: 1000;
       font-size: 20px;
       font-weight: bold;
+    }
+
+    sup {
+      color: #fbfbfb;
     }
 
     h1 {
