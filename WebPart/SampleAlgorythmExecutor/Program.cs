@@ -35,15 +35,26 @@ namespace SampleAlgorythmExecutor
 
             var messageHandlerOptions = new MessageHandlerOptions(ExceptionReceivedHandler)
             {
-                MaxAutoRenewDuration = TimeSpan.FromSeconds(40),
+                MaxAutoRenewDuration = TimeSpan.FromMinutes(40),
                 MaxConcurrentCalls = 1,
                 AutoComplete = false
             };
 
-            queueClient.RegisterMessageHandler(ProcessMessagesAsync, messageHandlerOptions);
+            queueClient.RegisterMessageHandler(TryProcessMessagesAsync, messageHandlerOptions);
             Console.ReadKey();
         }
-
+        static async Task TryProcessMessagesAsync(Message message, CancellationToken token)
+        {
+            try
+            {
+                await ProcessMessagesAsync(message, token);
+            }
+            catch
+            {
+                await queueClient.AbandonAsync(message.SystemProperties.LockToken);
+                throw;
+            }
+        }
         static async Task ProcessMessagesAsync(Message message, CancellationToken token)
         {
             var body = Encoding.UTF8.GetString(message.Body);
@@ -58,21 +69,34 @@ namespace SampleAlgorythmExecutor
             Directory.CreateDirectory(picsFolder);
             var picturePathesTasks = Directory
                 .EnumerateFiles(dicomFolder)
-                .Select(async (p, i) =>
+                .Select<string, Task<(Stream picStream, double deep)>>(async (p, i) =>
                 {
-                    var picPath = Path.Combine(picsFolder, $"{i}.png");
-                    var bitMap = await DicomRenderer.Render(File.OpenRead(p));
-                    using (var picStream = File.OpenWrite(picPath))
-                        await bitMap.CopyToAsync(picStream);
-                    return picPath;
+                    var bitMap = await DicomRenderer.Render(File.OpenRead(p), out var localMeta);
+                    var deep = double.TryParse(localMeta.FirstOrDefault(m => m.Description?.Contains("Slice Location") == true).Value, out var calcDeep)
+                        ? calcDeep : 0;
+                    return (bitMap, deep);
+                    
                 })
                 .ToList();
             await Task.WhenAll(picturePathesTasks);
+            var results = picturePathesTasks
+                .Select(t => t.Result)
+                .OrderBy(t => t.deep)
+                .Select(async (t, i) =>
+                {
+                    var picPath = Path.Combine(picsFolder, $"{i}.png");
+                    using (var picStream = File.OpenWrite(picPath))
+                        await t.picStream.CopyToAsync(picStream);
+                    return picPath;
+                })
+                .ToList();
+            await Task.WhenAll(results);
+
             var targetDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
             Directory.CreateDirectory(targetDir);
             var meta = new InputMeta
             {
-                Photos = picturePathesTasks.Select(p => new PhotoMeta { Path = p.Result }).ToList(),
+                Photos = results.Select(p => new PhotoMeta { Path = p.Result}).ToList(),
                 TargetDir = targetDir
             };
             var metaFilePath = Path.ChangeExtension(Path.GetTempFileName(), ".json");
