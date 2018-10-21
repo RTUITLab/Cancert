@@ -1,6 +1,10 @@
+#include <fstream>
+
 #include <opencv2/opencv.hpp>
+#include <json.hpp>
 
 using namespace cv;
+using json = nlohmann::json;
 
 static const double CRANIUM_AREA_COEFFICIENT = 0.0004;
 static const int ADAPTIVE_THRESHOLD_OFFSET = -10;
@@ -31,7 +35,7 @@ double getMean(Mat channel)
 	return means.at<double>(1);
 }
 
-void processImage(Mat origin)
+void processImage(Mat origin, Mat& result)
 {
 	auto originalMat = origin.clone();
 
@@ -111,14 +115,34 @@ void processImage(Mat origin)
 
 	rectangle(resultMat, minimalRect, Scalar(255, 255, 255), 1, 8, 0);
 
-	imshow("Final", resultMat);
+	result = std::move(resultMat);
+	//imshow("Final", resultMat);
 }
 
 int main(int argc, char* argv[])
 {
-	const auto origin = imread(argv[1], IMREAD_GRAYSCALE); //input image
+	if (argc < 2) {
+		return 1;
+	}
 
-	processImage(origin);
+	std::ifstream inputConfig(argv[1]);
+	json config;
+	inputConfig >> config;
 
-	waitKey();
+	const auto targetDir = config["TargetDir"].get<std::string>();
+	std::cout << targetDir << "\n";
+
+	auto photos = config["Photos"];
+	for (const auto& photo : photos) {
+		const auto path = photo["Path"].get<std::string>();
+
+		Mat result;
+		processImage(imread(path, IMREAD_GRAYSCALE), result);
+
+		const auto dotPos = path.find_last_of('.');
+		const auto extension = path.substr(dotPos);
+		imwrite(targetDir + path.substr(path.find_last_of('\\'), dotPos - 1) + "_result" + extension, result);
+	}
+
+	return 0;
 }
