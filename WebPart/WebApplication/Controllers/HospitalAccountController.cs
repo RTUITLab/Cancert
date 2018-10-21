@@ -43,7 +43,7 @@ namespace WebApplication.Controllers
                 .Subscriptions
                 .Include(s => s.Hospital)
                 .Where(s => s.AccessToken == accessToken)
-                .SingleAsync();
+                .SingleOrDefaultAsync();
             if (targetSubscription == null)
                 return NotFound();
 
