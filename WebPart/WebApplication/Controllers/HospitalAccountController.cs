@@ -5,11 +5,13 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using PublicAPI.Responses;
 using WebApplication.DataBase;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -21,11 +23,16 @@ namespace WebApplication.Controllers
     {
         private readonly DataBaseContext dbContext;
         private readonly IConfiguration configuration;
+        private readonly IMapper mapper;
 
-        public HospitalAccountController(DataBaseContext dbContext, IConfiguration configuration)
+        public HospitalAccountController(
+            DataBaseContext dbContext, 
+            IConfiguration configuration,
+            IMapper mapper)
         {
             this.dbContext = dbContext;
             this.configuration = configuration;
+            this.mapper = mapper;
         }
 
         [AllowAnonymous]
@@ -50,7 +57,8 @@ namespace WebApplication.Controllers
 
             return Json(new
             {
-                jwt = encodedJwt
+                jwt = encodedJwt,
+                me = mapper.Map<HospitalView>(targetSubscription.Hospital)
             });
         }
     }

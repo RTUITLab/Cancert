@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using WebApplication.Models.Data;
 
-namespace WebApplication.Models.Hospital
+namespace WebApplication.Models.HospitalModels
 {
     public class Hospital
     {
@@ -11,5 +12,6 @@ namespace WebApplication.Models.Hospital
         public string Name { get; set; }
 
         public List<Subscription> Subscriptions { get; set; }
+        public List<MrRecord> MrRecords { get; set; }
     }
 }

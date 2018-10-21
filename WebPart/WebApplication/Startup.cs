@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -55,6 +56,7 @@ namespace WebApplication
                         };
                     });
 
+            services.AddAutoMapper();
 
             services.AddTransient<IRenderer, DicomRenderer>();
             services.AddTransient<IFileStorage, LocalFileSystemFileStorage>();
@@ -67,7 +69,8 @@ namespace WebApplication
                 setup.Filters.Add(new AuthorizeFilter(policy));
             }
             )
-                .SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+                .SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
+                .AddJsonOptions(options => options.SerializerSettings.NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
