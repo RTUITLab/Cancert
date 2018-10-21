@@ -129,7 +129,7 @@ int main(int argc, char* argv[])
 	json config;
 	inputConfig >> config;
 
-	auto targetDir = config["TargetDir"].get<std::string>();
+	const auto targetDir = config["TargetDir"].get<std::string>();
 	std::cout << targetDir << "\n";
 
 	auto photos = config["Photos"];
@@ -141,7 +141,7 @@ int main(int argc, char* argv[])
 
 		const auto dotPos = path.find_last_of('.');
 		const auto extension = path.substr(dotPos);
-		imwrite(targetDir + path.substr(path.find_last_of('/') + 1, dotPos - 1) + "_result" + extension, result);
+		imwrite(targetDir + path.substr(path.find_last_of('\\'), dotPos - 1) + "_result" + extension, result);
 	}
 
 	return 0;
