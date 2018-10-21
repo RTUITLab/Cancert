@@ -19,6 +19,7 @@ namespace WebApplication
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
+                .ConfigureAppConfiguration(config => config.AddJsonFile("appsettings.Secret.json"))
                 .UseStartup<Startup>();
     }
 }

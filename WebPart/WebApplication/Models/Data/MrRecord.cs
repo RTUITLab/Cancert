@@ -14,6 +14,6 @@ namespace WebApplication.Models.Data
         public Guid HospitalId { get; set; }
         public Hospital Hospital { get; set; }
 
-        public List<MrAnalyze> MyProperty { get; set; }
+        public List<MrAnalyze> MrAnalyze { get; set; }
     }
 }

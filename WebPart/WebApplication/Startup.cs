@@ -18,6 +18,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Swashbuckle.AspNetCore.Swagger;
 using WebApplication.DataBase;
+using WebApplication.Services.Analyzers;
 using WebApplication.Services.FileSystem;
 using WebApplication.Services.Render;
 
@@ -36,6 +37,7 @@ namespace WebApplication
         public void ConfigureServices(IServiceCollection services)
         {
             services.Configure<LocalFileSystemSettings>(Configuration.GetSection(nameof(LocalFileSystemSettings)));
+            services.Configure<AzureServiceBusNotificatorSettings>(Configuration.GetSection(nameof(AzureServiceBusNotificatorSettings)));
             Console.WriteLine(Configuration.GetConnectionString("LocalDBDataBase"));
             services
                     .AddDbContext<DataBaseContext>(options =>
@@ -60,6 +62,7 @@ namespace WebApplication
 
             services.AddTransient<IRenderer, DicomRenderer>();
             services.AddTransient<IFileStorage, LocalFileSystemFileStorage>();
+            services.AddTransient<IAnalyzer, AzureServiceBusNotificatorAnalyzer>();
             services.AddMvc(setup =>
             {
                 var policy = new AuthorizationPolicyBuilder()

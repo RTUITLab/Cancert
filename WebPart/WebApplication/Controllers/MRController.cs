@@ -11,6 +11,7 @@ using PublicAPI.Requests;
 using WebApplication.Controllers.Stuff;
 using WebApplication.DataBase;
 using WebApplication.Models.Data;
+using WebApplication.Services.Analyzers;
 using WebApplication.Services.FileSystem;
 using WebApplication.Services.Render;
 
@@ -99,7 +100,8 @@ namespace WebApplication.Controllers
         [HttpPost("analyze/queue/{mrRecordId:guid}")]
         public async Task<IActionResult> QueueAnalyzes(
             Guid mrRecordId,
-            [FromBody]QueueAnalyzesRequest request)
+            [FromBody]QueueAnalyzesRequest request,
+            [FromServices] IAnalyzer analyzer)
         {
             var targetRecord = await dbContext.MrRecords.SingleOrDefaultAsync(r => r.Id == mrRecordId);
             if (targetRecord == null) return NotFound();
@@ -116,6 +118,7 @@ namespace WebApplication.Controllers
             }).ToList();
             dbContext.AddRange(analyzes);
             await dbContext.SaveChangesAsync();
+            await Task.WhenAll(analyzes.Select(a => analyzer.Analyze(a)));
             return Ok();
         }
     }
