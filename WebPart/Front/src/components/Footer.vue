@@ -1,13 +1,6 @@
 <template>
-  <div class="footer">
-    <el-row>
-      <el-col :xs="24" :md="12" align="right">
-        <b>No rights reserved&nbsp;|&nbsp;</b>
-      </el-col>
-      <el-col :xs="24" :md="12">
-        <b>reide740@gmail.com</b>
-      </el-col>
-    </el-row>
+  <div class="footer" align="center">
+    <b>No rights reserved&nbsp;|&nbsp;reide740@gmail.com</b>
   </div>
 </template>
 
@@ -23,12 +16,10 @@ export default class Footer extends Vue {}
 .footer {
   background-color: #2e2532;
   height: 60px;
+  line-height: 60px;
 
-  & > .el-row {
-    line-height: 60px;
-    & > .el-col b {
-      color: #6c666f;
-    }
+  b {
+    color: #6c666f;
   }
 
   &::after {

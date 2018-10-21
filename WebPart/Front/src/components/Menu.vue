@@ -1,7 +1,8 @@
 <template>
   <ul class="menu">
     <li class="noselect" @click="$router.push('/home')"><span>Home</span></li>
-    <li class="noselect" @click="$router.push('/about')"><span>About</span></li>
+    <li class="noselect" @click="$router.push('/dashboard')"><span>Dashboard</span></li>
+    <li class="noselect" @click="$router.push('/documentation')"><span>Documentation</span></li>
   </ul>
 </template>
 
@@ -14,9 +15,6 @@ export default class Menu extends Vue {}
 
 <style lang="scss">
 .menu {
-  margin-left: 10vw;
-  margin-right: 10vw;
-
   list-style-type: none;
   padding: 0;
   height: 60px;
@@ -38,6 +36,11 @@ export default class Menu extends Vue {}
       box-shadow: 0px -4px 0px 0px #fbfbfb inset;
       cursor: pointer;
     }
+  }
+
+  @media (min-width: 768px) {
+    margin-left: 10vw;
+    margin-right: 10vw;
   }
 }
 </style>

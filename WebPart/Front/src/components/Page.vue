@@ -41,6 +41,10 @@ export default class Page extends Vue {}
   color: #333;
 }
 
+body {
+  overflow-x: hidden;
+}
+
 .noselect {
   -moz-user-select: none;
   -webkit-user-select: none;
