@@ -13,7 +13,7 @@
           <template slot="second">
             <el-form>
               <el-form-item label="Subscription key">
-                <el-input placeholder="Please enter the key" v-model="subscriptionKey" width="100"></el-input>
+                <el-input placeholder="Please enter the key" v-model="subscriptionKey" autocomplete="on"></el-input>
               </el-form-item>
               <el-form-item>
                 <el-button type="primary" @click="onSubmit">Sign in</el-button>
@@ -23,6 +23,13 @@
         </LandingElement>
       </template>
     </Page>
+
+    <el-dialog title="Error" :visible.sync="hasError" width="30%">
+      <span>Unable to sign in</span>
+      <span slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="hasError = false">Ok</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
@@ -32,6 +39,7 @@ import axios from 'axios';
 
 import Page from '@/components/Page.vue';
 import LandingElement from '@/components/LandingElement.vue';
+import { currentState } from '@/models';
 
 @Component({
   components: {
@@ -40,14 +48,16 @@ import LandingElement from '@/components/LandingElement.vue';
   }
 })
 export default class Authorize extends Vue {
+  public hasError: boolean = false;
   public subscriptionKey: string = '';
 
   public onSubmit() {
-    axios
-      .post('HospitalAccount', `"${this.subscriptionKey}"`)
+    currentState
+      .authorize(this.subscriptionKey)
       .then((response) => {
-        console.log(response);
-      });
+        this.$router.push('/dashboard');
+      })
+      .catch(() => (this.hasError = true));
   }
 }
 </script>

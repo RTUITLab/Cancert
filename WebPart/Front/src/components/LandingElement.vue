@@ -1,13 +1,15 @@
 <template>
   <div class="landing-element">
-    <el-row>
+    <el-row v-if="!oneColumn">
       <el-col :xs="24" :md="12" v-bind:class="getOrderClass(reversed)">
         <slot name="first"></slot>
       </el-col>
       <el-col :xs="24" :md="12" v-bind:class="getOrderClass(!reversed)">
         <slot name="second"></slot>
       </el-col>
+
     </el-row>
+    <slot name="third"></slot>
   </div>
 </template>
 
@@ -20,6 +22,11 @@ export default class LandingElement extends Vue {
     default: false
   })
   public reversed!: boolean;
+
+  @Prop({
+    default: false
+  })
+  public oneColumn!: boolean;
 
   public getOrderClass(reversed: boolean) {
     return {
