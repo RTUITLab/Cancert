@@ -26,7 +26,7 @@
       <div slot="main" class="main">
         <LandingElement>
           <template slot="first">
-            <img src="https://cdn.aarp.net/content/dam/aarp/health/conditions_treatments/2018/01/1140-hospitals-overflow-with-flu-Patients.imgcache.revb8eb3d0cfb11329fed3a53f981abb3ff.jpg" alt="Test">
+            <img src="/img/home_first.jpg" alt="Test">
           </template>
           <template slot="second">
             <h1>New Way To Interact</h1><br>
@@ -35,7 +35,7 @@
         </LandingElement>
         <LandingElement :reversed="true">
           <template slot="first">
-            <img src="https://cdn10.phillymag.com/wp-content/uploads/sites/3/2017/08/hospital-istock0940x540.jpg" alt="Test">
+            <img src="/img/home_second.jpg" alt="Test">
           </template>
           <template slot="second">
             <h1>Stable and Secure</h1><br>

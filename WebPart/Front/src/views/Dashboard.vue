@@ -75,14 +75,16 @@ export default class Dashboard extends Vue {
   public attachments: File[] = [];
 
   public mounted() {
-    Promise.all([
-      currentState.fetchAlgorithms(),
-      currentState.fetchRecords(),
-      currentState.fetchAnalyze()
-    ]).then(() => {
-      this.algorithms = currentState.algorithms;
-      this.records = currentState.records;
-    });
+    setInterval(() => {
+      Promise.all([
+        currentState.fetchAlgorithms(),
+        currentState.fetchRecords(),
+        currentState.fetchAnalyze()
+      ]).then(() => {
+        this.algorithms = currentState.algorithms;
+        this.records = currentState.records;
+      });
+    }, 5000);
   }
 
   public getRecordAnalyze(record: Record) {

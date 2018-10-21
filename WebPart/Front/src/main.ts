@@ -1,6 +1,6 @@
 import axios from 'axios';
 axios.defaults.headers.post['Content-Type'] = 'application/json';
-axios.defaults.baseURL = 'http://192.168.80.162:5055/api/';
+axios.defaults.baseURL = 'http://192.168.137.210:5055/api/';
 
 import Vue from 'vue';
 import App from './App.vue';
